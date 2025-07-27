@@ -3,7 +3,7 @@
   "name": "main",
   "target": "branch",
   "source_type": "Repository",
-  "source": "EED-Solutions/eed_package_template",
+  "source": "EED-Solutions/eed_docker_python_uv",
   "enforcement": "active",
   "conditions": {
     "ref_name": {
