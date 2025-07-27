@@ -1,7 +1,7 @@
 [project]
-name = "eed-package-template"
-version = "0.2.0"
-description = "Add your description here"
+name = "eed-docker-python-uv"
+version = "0.1.0"
+description = "Manages the Python environment for EED-Solutions Docker images using uv."
 readme = "README.md"
 authors = [
     { name = "EED85", email = "eric.brahmann@eed-solutions.de" }
