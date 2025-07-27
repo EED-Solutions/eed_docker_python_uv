@@ -1,9 +1,17 @@
 # Use the official Python image
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
-# Install the project into `/app`
-WORKDIR /app
-ADD . /app
+# set labels
+# LABEL org.opencontainers.image.created=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# LABEL org.opencontainers.image.created="${BUILD_DATE}"
+
+LABEL maintainer="EED-Solutions"
+LABEL org.opencontainers.image.title="eed_docker_python_uv"
+LABEL org.opencontainers.image.description="Python 3.13 base image with uv, gh, duckdb and dev tools for CI and Codespaces"
+LABEL org.opencontainers.image.source="https://github.com/EED-Solutions/eed_docker_python_uv"
+LABEL org.opencontainers.image.licenses="MIT"
+
 
 # Install system packages:
 # curl
@@ -12,6 +20,12 @@ RUN apt-get update && apt-get install -y curl
 RUN apt-get update && apt-get install -y gnupg
 # git
 RUN apt-get update && apt-get install -y git
+# unzip
+RUN apt-get update && apt-get install -y unzip
+# build-essential
+RUN apt-get update && apt-get install -y build-essential
+# libsqlite3-dev
+RUN apt-get update && apt-get install -y libsqlite3-dev
 # duckdb
 RUN curl -sL https://install.duckdb.org | sh && \
     mkdir -p  /usr/local/bin && \
@@ -24,8 +38,9 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
     tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
     apt-get update && apt-get install -y gh
 
-# Default shell
-SHELL ["/bin/bash", "-c"]
+# Install the project into `/workspace`
+WORKDIR /workspace
+
 
 # Create vscode user to satisfy Codespaces requirement
 RUN useradd -m vscode
