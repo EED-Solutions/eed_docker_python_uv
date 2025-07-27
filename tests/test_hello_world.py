@@ -1,4 +1,4 @@
-from eed_package_template import hello_world
+from eed_docker_python_uv import hello_world
 
 
 def test_hello_world() -> None:
@@ -12,6 +12,6 @@ def test_hello_world() -> None:
     assert "Hello from" in result, (
         "Greeting message should start with 'Hello from'"
     )
-    assert "eed_package_template" in result, (
+    assert "eed_docker_python_uv" in result, (
         "Greeting message should include 'eed-package-template'"
     )
