@@ -45,25 +45,30 @@ jobs:
           TAG=latest
           SHOULD_BUILD_PUSH=false
 
+          echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
           echo "GITHUB_REF: $GITHUB_REF"
           echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
 
-          # Extract ref type and name
-          if [[ "$GITHUB_REF" == refs/heads/* ]]; then
-            GITHUB_REF_TYPE="branch"
-            GITHUB_REF_NAME="${GITHUB_REF#refs/heads/}"
+          # Determine context: PR or push/tag
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            BRANCH_NAME="$GITHUB_HEAD_REF"
+            REF_TYPE="pr"
+          elif [[ "$GITHUB_REF" == refs/heads/* ]]; then
+            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+            REF_TYPE="branch"
           elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            GITHUB_REF_TYPE="tag"
-            GITHUB_REF_NAME="${GITHUB_REF#refs/tags/}"
+            BRANCH_NAME="${GITHUB_REF#refs/tags/}"
+            REF_TYPE="tag"
           else
-            GITHUB_REF_TYPE=""
-            GITHUB_REF_NAME=""
+            BRANCH_NAME=""
+            REF_TYPE=""
           fi
-          echo "GITHUB_REF_TYPE: $GITHUB_REF_TYPE"
-          echo "GITHUB_REF_NAME: $GITHUB_REF_NAME"
+          echo "REF_TYPE: $REF_TYPE"
+          echo "BRANCH_NAME: $BRANCH_NAME"
+
           # Determine tag and build indicator based on context
-          if [[ "$GITHUB_REF_TYPE" == "branch" ]]; then
-            case "$GITHUB_REF_NAME" in
+          if [[ "$REF_TYPE" == "branch" || "$REF_TYPE" == "pr" ]]; then
+            case "$BRANCH_NAME" in
               "main")
                 TAG=main
                 SHOULD_BUILD_PUSH=true
@@ -77,15 +82,18 @@ jobs:
                 SHOULD_BUILD_PUSH=true
                 ;;
               *)
-                TAG=${{ github.ref_name }}
+                TAG="$BRANCH_NAME"
                 ;;
             esac
-          elif [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            TAG=${{ github.ref_name }}
-            if [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          elif [[ "$REF_TYPE" == "tag" ]]; then
+            TAG="$BRANCH_NAME"
+            if [[ "$BRANCH_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               SHOULD_BUILD_PUSH=true
             fi
           fi
+
+          echo "Determined TAG: $TAG"
+          echo "SHOULD_BUILD_PUSH: $SHOULD_BUILD_PUSH"
 
           # Build and push the image if indicated
           if [[ "$SHOULD_BUILD_PUSH" == "true" ]]; then
