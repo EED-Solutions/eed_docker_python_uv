@@ -1,14 +1,15 @@
 name: Publish Docker Image to GHCR
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
-      - release
-      - dev
     tags:
       - 'v*.*.*' # Semantic versioning pattern
+  pull_request:
+    # This triggers on any PR, but we filter by source branch in the job
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -20,6 +21,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # Only continue for PRs if the source branch is dev or release
+      - name: Check PR source branch
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "PR source branch: ${{ github.head_ref }}"
+          if [[ "${{ github.head_ref }}" != "dev" && "${{ github.head_ref }}" != "release" ]]; then
+            echo "Not a PR from dev or release branch. Skipping workflow."
+            exit 1
+          fi
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -34,9 +45,30 @@ jobs:
           TAG=latest
           SHOULD_BUILD_PUSH=false
 
+          echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
+
+          # Determine context: PR or push/tag
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            BRANCH_NAME="$GITHUB_HEAD_REF"
+            REF_TYPE="pr"
+          elif [[ "$GITHUB_REF" == refs/heads/* ]]; then
+            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+            REF_TYPE="branch"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            BRANCH_NAME="${GITHUB_REF#refs/tags/}"
+            REF_TYPE="tag"
+          else
+            BRANCH_NAME=""
+            REF_TYPE=""
+          fi
+          echo "REF_TYPE: $REF_TYPE"
+          echo "BRANCH_NAME: $BRANCH_NAME"
+
           # Determine tag and build indicator based on context
-          if [[ "${{ github.ref_type }}" == "branch" ]]; then
-            case "${{ github.ref_name }}" in
+          if [[ "$REF_TYPE" == "branch" || "$REF_TYPE" == "pr" ]]; then
+            case "$BRANCH_NAME" in
               "main")
                 TAG=main
                 SHOULD_BUILD_PUSH=true
@@ -50,15 +82,18 @@ jobs:
                 SHOULD_BUILD_PUSH=true
                 ;;
               *)
-                TAG=${{ github.ref_name }}
+                TAG="$BRANCH_NAME"
                 ;;
             esac
-          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
-            TAG=${{ github.ref_name }}
-            if [[ "${{ github.ref_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          elif [[ "$REF_TYPE" == "tag" ]]; then
+            TAG="$BRANCH_NAME"
+            if [[ "$BRANCH_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               SHOULD_BUILD_PUSH=true
             fi
           fi
+
+          echo "Determined TAG: $TAG"
+          echo "SHOULD_BUILD_PUSH: $SHOULD_BUILD_PUSH"
 
           # Build and push the image if indicated
           if [[ "$SHOULD_BUILD_PUSH" == "true" ]]; then
