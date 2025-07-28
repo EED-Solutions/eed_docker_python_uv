@@ -46,8 +46,8 @@ jobs:
           SHOULD_BUILD_PUSH=false
 
           # Determine tag and build indicator based on context
-          if [[ "${{ github.ref_type }}" == "branch" ]]; then
-            case "${{ github.ref_name }}" in
+          if [[ "$GITHUB_REF_TYPE" == "branch" ]]; then
+            case "$GITHUB_REF_NAME" in
               "main")
                 TAG=main
                 SHOULD_BUILD_PUSH=true
@@ -64,9 +64,9 @@ jobs:
                 TAG=${{ github.ref_name }}
                 ;;
             esac
-          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+          elif [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
             TAG=${{ github.ref_name }}
-            if [[ "${{ github.ref_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            if [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               SHOULD_BUILD_PUSH=true
             fi
           fi
