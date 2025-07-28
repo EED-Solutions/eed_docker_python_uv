@@ -56,7 +56,8 @@ jobs:
             GITHUB_REF_TYPE=""
             GITHUB_REF_NAME=""
           fi
-
+          echo "GITHUB_REF_TYPE: $GITHUB_REF_TYPE"
+          echo "GITHUB_REF_NAME: $GITHUB_REF_NAME"
           # Determine tag and build indicator based on context
           if [[ "$GITHUB_REF_TYPE" == "branch" ]]; then
             case "$GITHUB_REF_NAME" in
