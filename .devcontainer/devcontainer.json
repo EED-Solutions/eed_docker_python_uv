@@ -23,10 +23,13 @@
         "files.insertFinalNewline": true,
         "files.trimFinalNewlines": true,
         "files.autoSave": "afterDelay",
+        "terminal.integrated.env.linux": {
+          "UV_LINK_MODE": "copy"
+        }
       }
     }
   },
-  "postCreateCommand": "uv venv --force  && uv sync -v",
+  "postCreateCommand": "uv venv --force && uv sync -v && if ! git remote | grep origin; then repo=$(basename $(pwd)); git remote add origin https://github.com/EED-Solutions/$repo.git; fi",
   "features": {},
   "remoteUser": "vscode"
 }

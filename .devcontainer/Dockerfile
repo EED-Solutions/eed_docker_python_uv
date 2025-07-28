@@ -14,18 +14,14 @@ LABEL org.opencontainers.image.licenses="MIT"
 
 
 # Install system packages:
-# curl
-RUN apt-get update && apt-get install -y curl
-# gnupg
-RUN apt-get update && apt-get install -y gnupg
-# git
-RUN apt-get update && apt-get install -y git
-# unzip
-RUN apt-get update && apt-get install -y unzip
-# build-essential
-RUN apt-get update && apt-get install -y build-essential
-# libsqlite3-dev
-RUN apt-get update && apt-get install -y libsqlite3-dev
+RUN apt-get update && apt-get install -y \
+    curl \
+    gnupg \
+    git \
+    unzip \
+    build-essential \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
 # duckdb
 RUN curl -sL https://install.duckdb.org | sh && \
     mkdir -p  /usr/local/bin && \
