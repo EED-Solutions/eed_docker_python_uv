@@ -1,14 +1,15 @@
 name: Publish Docker Image to GHCR
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
-      - release
-      - dev
     tags:
       - 'v*.*.*' # Semantic versioning pattern
+  pull_request:
+    # This triggers on any PR, but we filter by source branch in the job
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -20,6 +21,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # Only continue for PRs if the source branch is dev or release
+      - name: Check PR source branch
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "PR source branch: ${{ github.head_ref }}"
+          if [[ "${{ github.head_ref }}" != "dev" && "${{ github.head_ref }}" != "release" ]]; then
+            echo "Not a PR from dev or release branch. Skipping workflow."
+            exit 1
+          fi
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
