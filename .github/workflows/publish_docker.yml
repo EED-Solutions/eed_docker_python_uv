@@ -2,11 +2,13 @@ name: Publish Docker Image to GHCR
 
 on:
   workflow_dispatch:
-#   push:
-#     branches: [main]
-#     paths:
-#       - '.devcontainer/Dockerfile'
-#       - '.github/workflows/publish.yml'
+  push:
+    branches:
+      - main
+      - release
+      - dev
+    tags:
+      - 'v*.*.*' # Semantic versioning pattern
 
 permissions:
   contents: read
@@ -24,10 +26,50 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GH_PAT }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
         run: |
-          IMAGE_NAME=ghcr.io/eed-solutions/eed_docker_python_uv:latest
-          docker build -t $IMAGE_NAME -f .devcontainer/Dockerfile .
-          docker push $IMAGE_NAME
+          IMAGE_NAME=ghcr.io/eed-solutions/eed_docker_python_uv
+          TAG=latest
+          SHOULD_BUILD_PUSH=false
+
+          # Determine tag and build indicator based on context
+          if [[ "${{ github.ref_type }}" == "branch" ]]; then
+            case "${{ github.ref_name }}" in
+              "main")
+                TAG=main
+                SHOULD_BUILD_PUSH=true
+                ;;
+              "dev")
+                TAG=dev
+                SHOULD_BUILD_PUSH=true
+                ;;
+              "release")
+                TAG=release
+                SHOULD_BUILD_PUSH=true
+                ;;
+              *)
+                TAG=${{ github.ref_name }}
+                ;;
+            esac
+          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+            TAG=${{ github.ref_name }}
+            if [[ "${{ github.ref_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              SHOULD_BUILD_PUSH=true
+            fi
+          fi
+
+          # Build and push the image if indicated
+          if [[ "$SHOULD_BUILD_PUSH" == "true" ]]; then
+            docker build -t $IMAGE_NAME:$TAG -f .devcontainer/Dockerfile .
+            docker push $IMAGE_NAME:$TAG
+          else
+            echo "Skipping build and push: not a main/dev/release branch or semantic version tag."
+          fi
+
+          # Push additional 'latest' tag for semantic version tags
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            docker tag $IMAGE_NAME:$TAG $IMAGE_NAME:latest
+            docker push $IMAGE_NAME:latest
+          fi
