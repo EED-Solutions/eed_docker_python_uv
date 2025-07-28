@@ -23,6 +23,9 @@
         "files.insertFinalNewline": true,
         "files.trimFinalNewlines": true,
         "files.autoSave": "afterDelay",
+        "terminal.integrated.env.linux": {
+          "UV_LINK_MODE": "copy"
+        }
       }
     }
   },
