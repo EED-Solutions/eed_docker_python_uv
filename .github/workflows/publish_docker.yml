@@ -45,6 +45,18 @@ jobs:
           TAG=latest
           SHOULD_BUILD_PUSH=false
 
+          # Extract ref type and name
+          if [[ "$GITHUB_REF" == refs/heads/* ]]; then
+            GITHUB_REF_TYPE="branch"
+            GITHUB_REF_NAME="${GITHUB_REF#refs/heads/}"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            GITHUB_REF_TYPE="tag"
+            GITHUB_REF_NAME="${GITHUB_REF#refs/tags/}"
+          else
+            GITHUB_REF_TYPE=""
+            GITHUB_REF_NAME=""
+          fi
+
           # Determine tag and build indicator based on context
           if [[ "$GITHUB_REF_TYPE" == "branch" ]]; then
             case "$GITHUB_REF_NAME" in
